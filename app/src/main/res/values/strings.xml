@@ -1,3 +1,6 @@
 <resources>
     <string name="app_name">GoJekTest</string>
+
+    <string name="api_key">363be100f7ea449e95b95753180807</string>
+    <string name="error_msg">Something went wrong at our end!</string>
 </resources>
