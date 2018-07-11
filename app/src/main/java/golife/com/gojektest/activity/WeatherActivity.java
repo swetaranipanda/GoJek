@@ -33,16 +33,21 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResult;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
+import com.google.gson.reflect.TypeToken;
+import com.squareup.okhttp.Callback;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 import golife.com.gojektest.R;
+import golife.com.gojektest.api.services.WeatherAPIService;
 import golife.com.gojektest.fragment.ErrorFragment;
 import golife.com.gojektest.fragment.ForecastFrag;
 import golife.com.gojektest.utils.AppUtils;
 import golife.com.gojektest.view.RobotoBlackTextView;
 import golife.com.gojektest.view.RobotoThinTextView;
-
 
 public class WeatherActivity extends AppCompatActivity implements LocationListener, GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener {
@@ -66,7 +71,10 @@ public class WeatherActivity extends AppCompatActivity implements LocationListen
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_weather);
-        AppUtils.changeStatusBarColor(this, WeatherActivity.this);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+
+            AppUtils.changeStatusBarColor(this, WeatherActivity.this);
+        }
         buildGoogleApiClient();
         initUI();
         if (AppUtils.isOnline(this)) {
@@ -94,7 +102,7 @@ public class WeatherActivity extends AppCompatActivity implements LocationListen
         tempText = findViewById(R.id.currenttemp_txt);
         locationTxt = findViewById(R.id.currentloc_txt);
         loadingImage = findViewById(R.id.loading_iv);
-        startRotateAnimation = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.rotate);
+         startRotateAnimation = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.rotate);
         loadingImage.startAnimation(startRotateAnimation);
     }
 
@@ -146,7 +154,12 @@ public class WeatherActivity extends AppCompatActivity implements LocationListen
             latitude = mLastLocation.getLatitude();
             longitude = mLastLocation.getLongitude();
             locality = AppUtils.geoCodeData(this, latitude, longitude);
-
+            try {
+                Log.i("api", "1");
+                WeatherAPIService.getInstance().getWeatherData(getString(R.string.api_key), locality, 5, weatherCallback());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         } else {
             loadingImage.startAnimation(startRotateAnimation);
             loadingImage.setVisibility(View.VISIBLE);
@@ -263,6 +276,58 @@ public class WeatherActivity extends AppCompatActivity implements LocationListen
         mGoogleApiClient.connect();
     }
 
+    private Callback weatherCallback() {
+        return new Callback() {
+            @Override
+            public void onFailure(Request request, IOException e) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        openErrorScreen();
+
+                    }
+                });
+            }
+
+            @Override
+            public void onResponse(Response response) throws IOException {
+                if (response.code() == 200) {
+                    WeatherRes weatherRes = GsonUtils.gson.fromJson(response.body().string(), new TypeToken<WeatherRes>() {
+                    }.getType());
+                    final String s = weatherRes.getLocation().getName();
+                    List<WeatherRes.Forecastday> forecastdays = weatherRes.getForecast().getForecastday();
+                    final double currentTemp = weatherRes.getCurrent().getTemp_c();
+                    dayList.clear();
+                    tempList.clear();
+                    for (int i = 1; i < forecastdays.size(); i++) {
+                        dayList.add(forecastdays.get(i).getDate());
+                        tempList.add(String.valueOf(Math.round(forecastdays.get(i).getDay().getAvgtemp_c())));
+                    }
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+
+                            loadingImage.clearAnimation();
+                            loadingImage.setVisibility(View.GONE);
+                            locationTxt.setVisibility(View.VISIBLE);
+                            tempText.setVisibility(View.VISIBLE);
+                            locationTxt.setText(s);
+                            tempText.setText(String.valueOf(Math.round(currentTemp)) + (char) 0x00B0);
+                            openFrag();
+                        }
+                    });
+                } else {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            openErrorScreen();
+
+                        }
+                    });
+                }
+            }
+        };
+    }
 
     private void openErrorScreen() {
         FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
@@ -281,14 +346,21 @@ public class WeatherActivity extends AppCompatActivity implements LocationListen
                 final Status status = result.getStatus();
                 switch (status.getStatusCode()) {
                     case LocationSettingsStatusCodes.SUCCESS:
+                        //  Log.i(TAG, "All location settings are satisfied.");
                         break;
                     case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
+                        //  Log.i(TAG, "Location settings are not satisfied. Show the user a dialog to upgrade location settings ");
+
                         try {
+                            // Show the dialog by calling startResolutionForResult(), and check the result
+                            // in onActivityResult().
                             status.startResolutionForResult(WeatherActivity.this, 5);
                         } catch (IntentSender.SendIntentException e) {
+                            //   Log.i(TAG, "PendingIntent unable to execute request.");
                         }
                         break;
                     case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
+                        // Log.i(TAG, "Location settings are inadequate, and cannot be fixed here. Dialog not created.");
                         break;
                 }
             }
@@ -313,10 +385,9 @@ public class WeatherActivity extends AppCompatActivity implements LocationListen
                         break;
                     case Activity.RESULT_CANCELED:
                         Toast.makeText(this, "Please enable location to proceed further", Toast.LENGTH_SHORT).show();
-                        finish();
+                finish();
                 }
                 break;
         }
     }
 }
-
