@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@android:color/white"
+    android:orientation="horizontal"
+    android:paddingTop="24dp"
+    android:paddingBottom="24dp"
+    android:weightSum="2">
+
+  <golife.com.gojektest.view.RobotoRegularTextView
+        android:id="@+id/day_tv"
+        android:layout_width="0dp"
+        android:textColor="#2A2A2A"
+        android:textSize="16sp"
+        android:layout_marginLeft="15dp"
+
+        android:layout_height="wrap_content"
+        android:layout_weight="1.5" />
+
+    <golife.com.gojektest.view.RobotoRegularTextView
+        android:id="@+id/temp_tv"
+        android:textColor="#2A2A2A"
+        android:textSize="16sp"
+        android:layout_width="0dp"
+        android:gravity="center"
+        android:layout_marginRight="6dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="0.5" />
+
+</LinearLayout>

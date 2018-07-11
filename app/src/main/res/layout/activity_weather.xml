@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/parent_view"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/app_background"
+    android:orientation="vertical"
+    tools:context="golife.com.gojektest.activity.WeatherActivity">
+
+    <ImageView
+        android:id="@+id/loading_iv"
+        android:layout_width="96dp"
+        android:layout_height="96dp"
+        android:layout_gravity="center"
+        android:visibility="visible"
+        android:src="@drawable/ic_loading" />
+
+    <golife.com.gojek.view.RobotoBlackTextView
+        android:id="@+id/currenttemp_txt"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="66dp"
+        android:gravity="center"
+        android:paddingLeft="15dp"
+        android:textColor="@color/grey"
+        android:textSize="96sp"
+        android:visibility="gone" />
+
+    <golife.com.gojek.view.RobotoThinTextView
+        android:id="@+id/currentloc_txt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginBottom="88dp"
+        android:textColor="@color/city_Text"
+        android:textSize="36sp"
+        android:visibility="gone" />
+
+    <LinearLayout
+        android:id="@+id/root_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:orientation="horizontal">
+
+    </LinearLayout>
+</FrameLayout>
