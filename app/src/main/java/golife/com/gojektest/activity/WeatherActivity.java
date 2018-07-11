@@ -1,8 +1,11 @@
 package golife.com.gojektest.activity;
 
 import android.Manifest;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Build;
@@ -21,14 +24,21 @@ import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.LocationSettingsResult;
+import com.google.android.gms.location.LocationSettingsStatusCodes;
 
 import java.util.ArrayList;
 
 import golife.com.gojektest.R;
 import golife.com.gojektest.fragment.ErrorFragment;
+import golife.com.gojektest.fragment.ForecastFrag;
 import golife.com.gojektest.utils.AppUtils;
 import golife.com.gojektest.view.RobotoBlackTextView;
 import golife.com.gojektest.view.RobotoThinTextView;
@@ -70,6 +80,7 @@ public class WeatherActivity extends AppCompatActivity implements LocationListen
             } else {
                 loadingImage.clearAnimation();
                 loadingImage.setVisibility(View.GONE);
+                switchOnGPS();
             }
         } else {
             loadingImage.clearAnimation();
@@ -94,7 +105,17 @@ public class WeatherActivity extends AppCompatActivity implements LocationListen
             mGoogleApiClient.connect();
     }
 
-
+    private void openFrag() {
+        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+        ft.setCustomAnimations(R.anim.translate_anim, R.anim.translate_anim);
+        Bundle bundle = new Bundle();
+        bundle.putStringArrayList("daylist", dayList);
+        bundle.putStringArrayList("templist", tempList);
+        ForecastFrag forecastFrag = new ForecastFrag();
+        forecastFrag.setArguments(bundle);
+        ft.replace(R.id.root_view, forecastFrag, "frag");
+        ft.commitAllowingStateLoss();
+    }
 
     private void stsrtLocationUpdate() {
         locationRequest = LocationRequest.create();
@@ -130,6 +151,7 @@ public class WeatherActivity extends AppCompatActivity implements LocationListen
             loadingImage.startAnimation(startRotateAnimation);
             loadingImage.setVisibility(View.VISIBLE);
 
+            // openErrorScreen();
             stsrtLocationUpdate();
         }
 
@@ -248,6 +270,53 @@ public class WeatherActivity extends AppCompatActivity implements LocationListen
         ft.commit();
     }
 
+    private void switchOnGPS() {
+        stsrtLocationUpdate();
+        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder().addLocationRequest(locationRequest);
+        builder.setAlwaysShow(true);
+        PendingResult<LocationSettingsResult> result = LocationServices.SettingsApi.checkLocationSettings(mGoogleApiClient, builder.build());
+        result.setResultCallback(new ResultCallback<LocationSettingsResult>() {
+            @Override
+            public void onResult(LocationSettingsResult result) {
+                final Status status = result.getStatus();
+                switch (status.getStatusCode()) {
+                    case LocationSettingsStatusCodes.SUCCESS:
+                        break;
+                    case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
+                        try {
+                            status.startResolutionForResult(WeatherActivity.this, 5);
+                        } catch (IntentSender.SendIntentException e) {
+                        }
+                        break;
+                    case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
+                        break;
+                }
+            }
+        });
+    }
 
-
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        switch (requestCode) {
+            case 5:
+                switch (resultCode) {
+                    case Activity.RESULT_OK:
+                        // All required changes were successfully made
+                        if (AppUtils.haveLocationPermission(this)) {
+                            displayLocation();
+                        } else {
+                            Log.i("q", "onActivity");
+                            requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 0);
+                        }
+                        break;
+                    case Activity.RESULT_CANCELED:
+                        Toast.makeText(this, "Please enable location to proceed further", Toast.LENGTH_SHORT).show();
+                        finish();
+                }
+                break;
+        }
+    }
 }
+
