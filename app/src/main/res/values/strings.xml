@@ -1,6 +1,7 @@
 <resources>
-    <string name="app_name">GoJekTest</string>
-
+    <string name="app_name">GoJek</string>
     <string name="api_key">363be100f7ea449e95b95753180807</string>
     <string name="error_msg">Something went wrong at our end!</string>
+    <string name="poor_connection">Please check your internet connection</string>
+    <string name="dialog_msg">Please give permission for location services to see the weather forecast around you</string>
 </resources>

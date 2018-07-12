@@ -4,8 +4,7 @@ import com.squareup.okhttp.Callback;
 
 import java.io.IOException;
 
-import golife.com.gojek.api.config.APIConfig;
-import golife.com.gojek.api.config.OKHTTPClient;
+import golife.com.gojektest.api.config.OKHTTPClient;
 
 
 /**
@@ -29,8 +28,10 @@ public class WeatherAPIService {
 
 
     public void getWeatherData(String apikey,String locality,int days, Callback callback) throws IOException {
+       String WEB_SERVER_URL = "http://api.apixu.com/v1/forecast.json";
+
         try {
-            OKHTTPClient.get(APIConfig.WEB_SERVER_URL + "?key="+apikey+"&q="+locality+"&days="+days, callback);
+            OKHTTPClient.get(WEB_SERVER_URL + "?key="+apikey+"&q="+locality+"&days="+days, callback);
         } catch (Exception e) {
         }
     }

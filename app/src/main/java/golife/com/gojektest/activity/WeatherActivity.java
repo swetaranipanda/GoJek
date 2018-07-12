@@ -10,6 +10,7 @@ import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.RequiresApi;
@@ -40,12 +41,15 @@ import com.squareup.okhttp.Response;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 import golife.com.gojektest.R;
+import golife.com.gojektest.api.dto.res.WeatherRes;
 import golife.com.gojektest.api.services.WeatherAPIService;
 import golife.com.gojektest.fragment.ErrorFragment;
 import golife.com.gojektest.fragment.ForecastFrag;
 import golife.com.gojektest.utils.AppUtils;
+import golife.com.gojektest.utils.GsonUtils;
 import golife.com.gojektest.view.RobotoBlackTextView;
 import golife.com.gojektest.view.RobotoThinTextView;
 
@@ -75,9 +79,11 @@ public class WeatherActivity extends AppCompatActivity implements LocationListen
 
             AppUtils.changeStatusBarColor(this, WeatherActivity.this);
         }
-        buildGoogleApiClient();
         initUI();
+
         if (AppUtils.isOnline(this)) {
+            buildGoogleApiClient();
+
             if (AppUtils.isGPSEnabled(this)) {
 
                 if (!AppUtils.haveLocationPermission(this)) {
@@ -91,9 +97,16 @@ public class WeatherActivity extends AppCompatActivity implements LocationListen
                 switchOnGPS();
             }
         } else {
-            loadingImage.clearAnimation();
-            loadingImage.setVisibility(View.GONE);
-            Toast.makeText(this, "Please check your internet connection", Toast.LENGTH_SHORT).show();
+           /* loadingImage.clearAnimation();
+            loadingImage.setVisibility(View.GONE);*/
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(WeatherActivity.this, "Please check your internet connection", Toast.LENGTH_SHORT).show();
+                    openErrorScreen(getResources().getString(R.string.poor_connection));
+                }
+            }, 2000);
+
         }
 
     }
@@ -102,6 +115,7 @@ public class WeatherActivity extends AppCompatActivity implements LocationListen
         tempText = findViewById(R.id.currenttemp_txt);
         locationTxt = findViewById(R.id.currentloc_txt);
         loadingImage = findViewById(R.id.loading_iv);
+        loadingImage.setVisibility(View.VISIBLE);
          startRotateAnimation = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.rotate);
         loadingImage.startAnimation(startRotateAnimation);
     }
@@ -211,7 +225,6 @@ public class WeatherActivity extends AppCompatActivity implements LocationListen
                     }
                 } else if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_DENIED) {
                     final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                    Log.d("time", String.valueOf(System.currentTimeMillis()));
                     builder.setMessage("Please give permission for location services to see the weather forecast around you")
                             .setCancelable(false)
                             .setPositiveButton("OK", new DialogInterface.OnClickListener() {
@@ -283,7 +296,7 @@ public class WeatherActivity extends AppCompatActivity implements LocationListen
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        openErrorScreen();
+                        openErrorScreen(getResources().getString(R.string.error_msg));
 
                     }
                 });
@@ -320,7 +333,7 @@ public class WeatherActivity extends AppCompatActivity implements LocationListen
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            openErrorScreen();
+                            openErrorScreen(getResources().getString(R.string.error_msg));
 
                         }
                     });
@@ -329,9 +342,13 @@ public class WeatherActivity extends AppCompatActivity implements LocationListen
         };
     }
 
-    private void openErrorScreen() {
+    private void openErrorScreen(String msg) {
+        Bundle bundle = new Bundle();
+        bundle.putString("errormsg",msg );
         FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-        ft.replace(R.id.parent_view, new ErrorFragment());
+        ErrorFragment errorFragment=new ErrorFragment();
+        errorFragment.setArguments(bundle);
+        ft.replace(R.id.parent_view, errorFragment);
         ft.commit();
     }
 

@@ -11,6 +11,7 @@
         android:layout_height="wrap_content"
         android:text="@string/error_msg"
         android:textColor="@color/white"
+        android:id="@+id/msg_tv"
         android:gravity="center"
         android:paddingLeft="20dp"
         android:paddingRight="20dp"
